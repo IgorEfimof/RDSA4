@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon180.png">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RDS4">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Рапидо Старт</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --text-color: #1c1c1e;
+            --card-bg: white;
+            --border-color: #ddd;
+            --primary-color: #0066cc;
+            --secondary-color: #ff2d55;
+            --keyboard-bg: #e5e5ea;
+            --button-active: #004499;
+            --history-border: #eee;
+            --selected-color: #34c759;
+            --special-color: #af52de;
+            --karnaugh-color: #ff9500;
+        }
+
+        .dark-mode {
+            --bg-color: #1c1c1e;
+            --text-color: #f5f5f7;
+            --card-bg: #2c2c2e;
+            --border-color: #444;
+            --primary-color: #0a84ff;
+            --secondary-color: #ff375f;
+            --keyboard-bg: #3a3a3c;
+            --button-active: #0061c8;
+            --history-border: #444;
+            --selected-color: #30d158;
+            --special-color: #bf5af2;
+            --karnaugh-color: #ff9f0a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 10px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            max-width: 100%;
+            margin: 0 auto;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding-bottom: 280px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+        h3 {
+            color: var(--primary-color);
+            font-size: 1rem;
+            margin: 10px 0 5px;
+        }
+        .numbers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 8px 0;
+        }
+        .number {
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 15px;
+            transition: transform 0.2s;
+        }
+        .number.selected {
+            background: var(--selected-color);
+            transform: scale(1.1);
+        }
+        .number.small {
+            background: var(--secondary-color);
+            width: 36px;
+        }
+        .number.special {
+            background: var(--special-color);
+        }
+        .number.karnaugh {
+            background: var(--karnaugh-color);
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 8px;
+            outline: none;
+        }
+        button:active, button:focus {
+            background: var(--button-active);
+        }
+        button.secondary {
+            background: var(--keyboard-bg);
+            color: var(--text-color);
+        }
+        #inputDisplay {
+            width: 100%;
+            min-height: 70px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 8px;
+            font-size: 15px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            word-wrap: break-word;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .input-active {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0,102,204,0.2);
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            font-size: 13px;
+        }
+        .stats-table th, .stats-table td {
+            padding: 6px;
+            text-align: left;
+            border-bottom: 1px solid var(--history-border);
+        }
+        .hot {
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+        .cold {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .history-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--history-border);
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item button {
+            width: auto;
+            padding: 2px 8px;
+            margin: 0;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .custom-keyboard {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--keyboard-bg);
+            padding: 8px;
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            touch-action: manipulation;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .keyboard-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        .keyboard-key {
+            flex: 1;
+            height: 48px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            color: var(--text-color);
+        }
+        .keyboard-key:active {
+            background: var(--history-border);
+        }
+        .keyboard-key.wide {
+            flex: 2;
+        }
+        .keyboard-key.blue {
+            background: var(--primary-color);
+            color: white;
+        }
+        .keyboard-key.red {
+            background: var(--secondary-color);
+            color: white;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .validation-error {
+            color: var(--secondary-color);
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        .method-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .method-btn {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            background: var(--keyboard-bg);
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .method-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        .info-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            text-align: center;
+            line-height: 16px;
+            font-size: 12px;
+            margin-left: 5px;
+            cursor: help;
+        }
+        
+        /* Новые стили для блока выигрышей */
+        .win-stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            gap: 10px;
+        }
+        .win-stat {
+            text-align: center;
+            flex: 1;
+            min-width: 100px;
+        }
+        .win-stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .profit-positive {
+            color: var(--selected-color);
+        }
+        .profit-negative {
+            color: var(--secondary-color);
+        }
+        .wins-details {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .win-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--history-border);
+            font-size: 13px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 5px;
+        }
+        .win-item > span {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        /* Новые стили для истории */
+        .history-header {
+            display: flex;
+            font-weight: bold;
+            padding: 5px 0;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        .history-row {
+            display: flex;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--history-border);
+        }
+        .history-type {
+            width: 100px;
+            font-weight: bold;
+        }
+        .history-field {
+            flex: 1;
+            min-width: 0;
+        }
+        .history-field2 {
+            width: 50px;
+            text-align: center;
+        }
+        .history-actions {
+            width: 60px;
+            text-align: right;
+        }
+        .prediction {
+            background-color: rgba(52, 199, 89, 0.1);
+        }
+        .draw {
+            background-color: rgba(0, 122, 255, 0.1);
+        }
+        
+        /* Для полноэкранного режима */
+        @media (display-mode: fullscreen) {
+            .container {
+                padding-bottom: 320px;
+            }
+            .custom-keyboard {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+        
+        /* Отключение системной клавиатуры */
+        #fakeInput {
+            position: absolute;
+            opacity: 0;
+            height: 0;
+            width: 0;
+            top: -1000px;
+            left: -1000px;
+            pointer-events: none;
+        }
+        
+        .calc-details {
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+        }
+        .calc-details.active {
+            display: block;
+        }
+        .calc-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+        
+        /* PWA режим */
+        .pwa-mode .container {
+            padding-bottom: calc(280px + env(safe-area-inset-bottom));
+        }
+        .pwa-mode .custom-keyboard {
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+        }
+        
+        /* Добавленные стили */
+        .frequency-chart {
+            display: flex;
+            align-items: flex-end;
+            height: 120px;
+            margin: 10px 0;
+            gap: 2px;
+            justify-content: center;
+        }
+        .frequency-bar {
+            width: 12px;
+            background: var(--primary-color);
+            border-radius: 3px 3px 0 0;
+            position: relative;
+        }
+        .frequency-bar.hot {
+            background: var(--secondary-color);
+        }
+        .frequency-bar.cold {
+            background: var(--primary-color);
+        }
+        .frequency-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+        }
+        .stats-advanced {
+            margin-top: 15px;
+            font-size: 13px;
+        }
+        .cluster-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 8px 0;
+        }
+        .cluster-title {
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+            color: var(--special-color);
+        }
+        .cluster-badge {
+            background: var(--special-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle">🌓</button>
+    
+    <div class="container">
+        <div class="card">
+            <h1>Рапидо Старт</h1>
+            <p class="subtitle">Анализ с методами Огнева, Карнауха и кластеризацией</p>
+        </div>
+        
+        <div class="card">
+            <h2>Сгенерировать числа</h2>
+            <div class="method-selector">
+                <div class="method-btn active" data-method="cold" tabindex="0">Холодные</div>
+                <div class="method-btn" data-method="ogneva" tabindex="0">Огнева<span class="info-icon" title="Характеристическое число">?</span></div>
+                <div class="method-btn" data-method="karnaugh" tabindex="0">Карнауха<span class="info-icon" title="Метод математика П.В. Карнауха">?</span></div>
+                <div class="method-btn" data-method="cluster" tabindex="0">Кластеризация<span class="info-icon" title="Группировка чисел по частоте выпадения">?</span></div>
+                <div class="method-btn" data-method="random" tabindex="0">Случайные</div>
+            </div>
+            <p>Поле 1 (8 из 20):</p>
+            <div class="numbers" id="field1"></div>
+            <p>Поле 2 (1 из 4):</p>
+            <div class="numbers" id="field2"></div>
+            
+            <div id="karnaughCalc" class="calc-details">
+                <div class="calc-title">Расчет метода Карнауха:</div>
+                <div id="karnaughDetails"></div>
+            </div>
+            
+            <div id="clusterCalc" class="calc-details">
+                <div class="calc-title">Детали кластеризации:</div>
+                <div id="clusterDetails"></div>
+            </div>
+            
+            <button id="genBtn">Сгенерировать</button>
+            <button id="addPredictionBtn" style="margin-top: 5px; background: var(--selected-color)">Добавить прогноз</button>
+        </div>
+        
+        <div class="card">
+            <h2>Добавить тираж</h2>
+            <div id="inputContainer" style="position:relative;">
+                <input type="text" id="fakeInput" readonly tabindex="-1" />
+                <div id="inputDisplay" tabindex="0">Коснитесь для ввода (формат: номер_тиража|1,2,3,4,5,6,7,8|1)</div>
+                <div id="validationError" class="validation-error"></div>
+            </div>
+            <button id="addHistoryBtn">Добавить</button>
+        </div>
+        
+        <div class="card">
+            <h2>Статистика чисел</h2>
+            <table class="stats-table" id="statsTable"></table>
+        </div>
+        
+        <div class="card">
+            <h2>Расширенный частотный анализ <span class="cluster-badge">Новое</span></h2>
+            <div class="stats-advanced">
+                <p>Среднее значение: <span id="meanValue">н/д</span></p>
+                <p>Стандартное отклонение: <span id="stdDevValue">н/д</span></p>
+                <p>Горячие числа (выше среднего): <span id="hotNumbers">н/д</span></p>
+                <p>Холодные числа (ниже среднего): <span id="coldNumbers">н/д</span></p>
+            </div>
+            <div class="frequency-chart" id="frequencyChart"></div>
+        </div>
+        
+        <div class="card" style="max-height: 300px; overflow-y: auto;">
+            <h2>История розыгрышей</h2>
+            <div class="history-header">
+                <div class="history-type">Тип</div>
+                <div class="history-field">Поле 1 (8 из 20)</div>
+                <div class="history-field2">Поле 2</div>
+                <div class="history-actions"></div>
+            </div>
+            <div id="historyList"></div>
+            <button id="clearHistoryBtn" class="secondary">Очистить историю</button>
+        </div>
+        
+        <div class="card">
+            <h2>Статистика выигрышей</h2>
+            <div id="winsStats" class="win-stats">
+                <div class="win-stat">
+                    <div>Ставок</div>
+                    <div id="totalBets" class="win-stat-value">0</div>
+                </div>
+                <div class="win-stat">
+                    <div>Потрачено</div>
+                    <div id="totalSpent" class="win-stat-value">0 руб</div>
+                </div>
+                <div class="win-stat">
+                    <div>Выиграно</div>
+                    <div id="totalWon" class="win-stat-value">0 руб</div>
+                </div>
+                <div class="win-stat">
+                    <div>Баланс</div>
+                    <div id="balance" class="win-stat-value">0 руб</div>
+                </div>
+            </div>
+            <div id="winsDetails" class="wins-details"></div>
+        </div>
+    </div>
+
+    <div class="custom-keyboard" id="customKeyboard">
+        <div class="keyboard-row">
+            <div class="keyboard-key">1</div>
+            <div class="keyboard-key">2</div>
+            <div class="keyboard-key">3</div>
+            <div class="keyboard-key">4</div>
+            <div class="keyboard-key">5</div>
+            <div class="keyboard-key">6</div>
+            <div class="keyboard-key">7</div>
+            <div class="keyboard-key">8</div>
+            <div class="keyboard-key">9</div>
+            <div class="keyboard-key wide red" id="keyDelete">⌫</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="keyboard-key">0</div>
+            <div class="keyboard-key">,</div>
+            <div class="keyboard-key">|</div>
+            <div class="keyboard-key wide blue" id="keyDone">Готово</div>
+        </div>
+    </div>
+
+<script>
+    // --- Тема ---
+    const themeToggle = document.getElementById('themeToggle');
+    function applyTheme(dark) {
+        if(dark) {
+            document.documentElement.classList.add('dark-mode');
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+            localStorage.setItem('darkMode', 'false');
+        }
+    }
+    themeToggle.onclick = () => {
+        const dark = document.documentElement.classList.contains('dark-mode');
+        applyTheme(!dark);
+    };
+    // Инициализация темы по сохранённому значению
+    applyTheme(localStorage.getItem('darkMode') === 'true');
+
+    // Проверка на PWA режим
+    if (window.matchMedia('(display-mode: fullscreen)').matches) {
+        document.documentElement.classList.add('pwa-mode');
+    }
+
+    // --- История ---
+    let history = JSON.parse(localStorage.getItem('rapido2History') || '[]');
+    if (!Array.isArray(history)) history = [];
+    
+    // --- Отображение истории ---
+    const historyList = document.getElementById('historyList');
+    function renderHistory() {
+        historyList.innerHTML = '';
+        history.forEach((entry, idx) => {
+            const [type, field1, field2] = entry.split('|');
+            const row = document.createElement('div');
+            row.className = `history-row ${type === 'прогноз' ? 'prediction' : 'draw'}`;
+            row.innerHTML = `
+                <div class="history-type">${type}</div>
+                <div class="history-field">${field1}</div>
+                <div class="history-field2">${field2}</div>
+                <div class="history-actions">
+                    <button data-idx="${idx}">X</button>
+                </div>
+            `;
+            historyList.appendChild(row);
+        });
+    }
+    renderHistory();
+    
+    // Удаление записи
+    historyList.addEventListener('pointerup', e => {
+        if(e.target.tagName === 'BUTTON') {
+            const idx = +e.target.dataset.idx;
+            history.splice(idx, 1);
+            saveHistory();
+            renderHistory();
+            updateStats();
+            updateWinsStats();
+        }
+    });
+    
+    // Очистка истории
+    document.getElementById('clearHistoryBtn').onclick = () => {
+        if(confirm('Очистить всю историю?')) {
+            history = [];
+            saveHistory();
+            renderHistory();
+            updateStats();
+            updateWinsStats();
+            generateNumbers();
+        }
+    };
+
+    function saveHistory() {
+        localStorage.setItem('rapido2History', JSON.stringify(history));
+        updateWinsStats();
+        updateFrequencyAnalysis();
+    }
+
+    // --- Ввод ---
+    const inputDisplay = document.getElementById('inputDisplay');
+    const customKeyboard = document.getElementById('customKeyboard');
+    const validationError = document.getElementById('validationError');
+    const fakeInput = document.getElementById('fakeInput');
+    
+    // Текущее значение ввода
+    let inputValue = '';
+
+    // Функция для отображения клавиатуры (PWA-совместимая)
+    function showKeyboard() {
+        customKeyboard.style.display = 'flex';
+        inputDisplay.classList.add('input-active');
+        validationError.style.display = 'none';
+        
+        // Фокус на скрытое поле для iOS в PWA режиме
+        setTimeout(() => {
+            fakeInput.focus();
+        }, 100);
+    }
+    
+    function hideKeyboard() {
+        customKeyboard.style.display = 'none';
+        inputDisplay.classList.remove('input-active');
+    }
+    
+    function updateInputDisplay() {
+        inputDisplay.textContent = inputValue || 'Коснитесь для ввода (формат: номер_тиража|1,2,3,4,5,6,7,8|1)';
+    }
+
+    // Обработка нажатий на виртуальную клавиатуру
+    document.querySelectorAll('.keyboard-key').forEach(key => {
+        key.addEventListener('pointerdown', function(e) {
+            if (e.pointerType === 'touch') {
+                e.preventDefault();
+            }
+            
+            const keyText = this.textContent;
+            
+            if (keyText === 'Готово') {
+                hideKeyboard();
+                return;
+            }
+            
+            if (keyText === '⌫') {
+                inputValue = inputValue.slice(0, -1);
+                updateInputDisplay();
+                return;
+            }
+            
+            // Разрешаем цифры, запятую и вертикальную черту
+            if(/[0-9,|]/.test(keyText)) {
+                inputValue += keyText;
+                updateInputDisplay();
+            }
+        });
+    });
+
+    // Обработчики событий для поля ввода (PWA-совместимые)
+    inputDisplay.addEventListener('pointerdown', function(e) {
+        if (e.pointerType === 'touch') {
+            e.preventDefault();
+            showKeyboard();
+        }
+    });
+    
+    inputDisplay.addEventListener('click', showKeyboard);
+    
+    // --- Валидация ввода ---
+    function validateInput(val) {
+        validationError.style.display = 'none';
+        
+        // Проверка формата
+        if(!/^(\d+)\|(\d{1,2},){7}\d{1,2}\|\d{1,2}$/.test(val)) {
+            validationError.textContent = 'Неверный формат. Пример: 158447|1,2,3,4,5,6,7,8|1';
+            validationError.style.display = 'block';
+            return false;
+        }
+        
+        const [drawId, field1, field2] = val.split('|');
+        const nums1 = field1.split(',').map(n => parseInt(n));
+        const num2 = parseInt(field2);
+        
+        // Проверка диапазонов
+        const invalid1 = nums1.filter(n => n < 1 || n > 20);
+        if(invalid1.length > 0) {
+            validationError.textContent = `Числа в поле 1 должны быть от 1 до 20. Ошибка: ${invalid1.join(', ')}`;
+            validationError.style.display = 'block';
+            return false;
+        }
+        
+        if(num2 < 1 || num2 > 4) {
+            validationError.textContent = 'Число в поле 2 должно быть от 1 до 4';
+            validationError.style.display = 'block';
+            return false;
+        }
+        
+        // Проверка дубликатов в поле 1
+        const unique = new Set(nums1);
+        if(unique.size !== 8) {
+            validationError.textContent = 'В поле 1 не должно быть повторяющихся чисел';
+            validationError.style.display = 'block';
+            return false;
+        }
+        
+        return true;
+    }
+
+    // --- Добавление в историю ---
+    document.getElementById('addHistoryBtn').onclick = () => {
+        if(!inputValue) {
+            validationError.textContent = 'Введите числа в формате: номер_тиража|1,2,3,4,5,6,7,8|1';
+            validationError.style.display = 'block';
+            return;
+        }
+        
+        if(!validateInput(inputValue)) return;
+        
+        // Проверка дубликатов в истории
+        if(history.includes(inputValue)) {
+            validationError.textContent = 'Эта комбинация уже есть в истории';
+            validationError.style.display = 'block';
+            return;
+        }
+        
+        history.push(inputValue);
+        saveHistory();
+        renderHistory();
+        updateStats();
+        inputValue = '';
+        updateInputDisplay();
+        hideKeyboard();
+    };
+
+    // --- Добавление прогноза ---
+    document.getElementById('addPredictionBtn').onclick = () => {
+        const nums1 = Array.from(document.querySelectorAll('#field1 .number')).map(el => el.textContent);
+        const num2 = document.querySelector('#field2 .number').textContent;
+        
+        if(nums1.length !== 8) {
+            alert('Сначала сгенерируйте числа');
+            return;
+        }
+        
+        const prediction = `прогноз|${nums1.join(',')}|${num2}`;
+        
+        // Проверка дубликатов
+        if(history.includes(prediction)) {
+            alert('Этот прогноз уже есть в истории');
+            return;
+        }
+        
+        history.push(prediction);
+        saveHistory();
+        renderHistory();
+        
+        // Подсветка добавленного прогноза
+        const lastRow = historyList.lastChild;
+        lastRow.style.backgroundColor = 'var(--selected-color)';
+        lastRow.style.transition = 'background-color 1s';
+        setTimeout(() => {
+            lastRow.style.backgroundColor = '';
+        }, 1000);
+    };
+
+    // --- Статистика ---
+    const statsTable = document.getElementById('statsTable');
+
+    function updateStats() {
+        // Считаем частоты для обоих полей (только по тиражам, не прогнозам)
+        const countField1 = Array(20).fill(0);
+        const countField2 = Array(4).fill(0);
+
+        history.forEach(entry => {
+            // Пропускаем прогнозы
+            if(entry.startsWith('прогноз')) return;
+            
+            const parts = entry.split('|');
+            if(parts.length !== 3) return;
+            
+            const nums1 = parts[1].split(',').map(n => parseInt(n));
+            const num2 = parseInt(parts[2]);
+
+            nums1.forEach(n => {
+                if(n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+            if(num2 >= 1 && num2 <= 4) countField2[num2 - 1]++;
+        });
+
+        let html = '<tr><th>Число (8 из 20)</th><th>Частота</th><th>Число (1 из 4)</th><th>Частота</th></tr>';
+
+        for(let i = 0; i < 20; i++) {
+            const hotColdClass1 = countField1[i] > 0 ? 'hot' : 'cold';
+            const hotColdClass2 = (i < 4 && countField2[i] > 0) ? 'hot' : 'cold';
+            html += `<tr>
+                <td>${i + 1}</td>
+                <td class="${hotColdClass1}">${countField1[i]}</td>
+                <td>${i < 4 ? i + 1 : ''}</td>
+                <td>${i < 4 ? countField2[i] : ''}</td>
+            </tr>`;
+        }
+        statsTable.innerHTML = html;
+        
+        // Обновляем расширенный частотный анализ
+        updateFrequencyAnalysis();
+    }
+    
+    // --- Методы генерации ---
+    let currentMethod = 'cold';
+    const karnaughDetails = document.getElementById('karnaughDetails');
+    const karnaughCalc = document.getElementById('karnaughCalc');
+    const clusterDetails = document.getElementById('clusterDetails');
+    const clusterCalc = document.getElementById('clusterCalc');
+    
+    // Переключение методов
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.addEventListener('pointerdown', () => {
+            document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMethod = btn.dataset.method;
+            
+            // Показываем/скрываем блок с расчетом для Карнауха
+            karnaughCalc.classList.toggle('active', currentMethod === 'karnaugh');
+            clusterCalc.classList.toggle('active', currentMethod === 'cluster');
+            
+            generateNumbers();
+        });
+    });
+    
+    // Основная функция генерации
+    function generateNumbers() {
+        switch(currentMethod) {
+            case 'cold':
+                generateColdNumbers();
+                break;
+            case 'ogneva':
+                generateOgnevaNumbers();
+                break;
+            case 'karnaugh':
+                generateKarnaughNumbers();
+                break;
+            case 'cluster':
+                generateClusterNumbers();
+                break;
+            case 'random':
+                generateRandomNumbers();
+                break;
+            default:
+                generateColdNumbers();
+        }
+    }
+    
+    // Метод холодных чисел
+    function generateColdNumbers() {
+        const countField1 = Array(20).fill(0);
+        const countField2 = Array(4).fill(0);
+
+        history.forEach(entry => {
+            // Пропускаем прогнозы
+            if(entry.startsWith('прогноз')) return;
+            
+            const parts = entry.split('|');
+            if(parts.length !== 3) return;
+            
+            const nums1 = parts[1].split(',').map(n => parseInt(n));
+            const num2 = parseInt(parts[2]);
+
+            nums1.forEach(n => {
+                if(n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+            if(num2 >= 1 && num2 <= 4) countField2[num2 - 1]++;
+        });
+
+        if(history.filter(e => !e.startsWith('прогноз')).length === 0) {
+            generateRandomNumbers();
+            return;
+        }
+
+        // Выбираем 8 самых редких чисел для первого поля
+        let numbers1 = Array.from({ length: 20 }, (_, i) => i + 1);
+        numbers1.sort((a, b) => countField1[a - 1] - countField1[b - 1]);
+        const selected1 = numbers1.slice(0, 8).sort((a, b) => a - b);
+
+        // Для второго поля выбираем самое редкое число
+        let numbers2 = Array.from({ length: 4 }, (_, i) => i + 1);
+        numbers2.sort((a, b) => countField2[a - 1] - countField2[b - 1]);
+        const selected2 = numbers2[0];
+
+        displayNumbers(selected1, selected2, 'cold');
+    }
+    
+    // Метод Огнева (характеристическое число)
+    function generateOgnevaNumbers() {
+        const draws = history.filter(e => !e.startsWith('прогноз'));
+        
+        if(draws.length < 5) {
+            generateColdNumbers();
+            return;
+        }
+        
+        // Рассчитываем среднее характеристическое число
+        let totalOgneva = 0;
+        draws.forEach(entry => {
+            const parts = entry.split('|');
+            if(parts.length !== 3) return;
+            
+            const nums1 = parts[1].split(',').map(Number);
+            const num2 = parseInt(parts[2]);
+            const sum1 = nums1.reduce((a, b) => a + b, 0);
+            totalOgneva += sum1 * num2;
+        });
+        const avgOgneva = totalOgneva / draws.length;
+        
+        // Генерируем комбинации и выбираем лучшую
+        let bestCombination = null;
+        let bestDiff = Infinity;
+        
+        for(let i = 0; i < 50; i++) {
+            const nums1 = [];
+            while(nums1.length < 8) {
+                const n = Math.floor(Math.random() * 20) + 1;
+                if(!nums1.includes(n)) nums1.push(n);
+            }
+            nums1.sort((a, b) => a - b);
+            const num2 = Math.floor(Math.random() * 4) + 1;
+            
+            const sum1 = nums1.reduce((a, b) => a + b, 0);
+            const ogneva = sum1 * num2;
+            const diff = Math.abs(ogneva - avgOgneva);
+            
+            if(diff < bestDiff) {
+                bestDiff = diff;
+                bestCombination = { nums1, num2 };
+            }
+        }
+        
+        if(bestCombination) {
+            displayNumbers(bestCombination.nums1, bestCombination.num2, 'ogneva');
+        } else {
+            generateRandomNumbers();
+        }
+    }
+    
+    // УЛУЧШЕННЫЙ метод Карнауха с математическими расчетами
+    function generateKarnaughNumbers() {
+        const countField1 = Array(20).fill(0);
+        const countField2 = Array(4).fill(0);
+
+        history.forEach(entry => {
+            // Пропускаем прогнозы
+            if(entry.startsWith('прогноз')) return;
+            
+            const parts = entry.split('|');
+            if(parts.length !== 3) return;
+            
+            const nums1 = parts[1].split(',').map(n => parseInt(n));
+            const num2 = parseInt(parts[2]);
+
+            nums1.forEach(n => {
+                if(n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+            if(num2 >= 1 && num2 <= 4) countField2[num2 - 1]++;
+        });
+
+        const draws = history.filter(e => !e.startsWith('прогноз')).length;
+        if(draws < 5) {
+            generateColdNumbers();
+            return;
+        }
+        
+        // 1. Рассчитываем среднюю частоту выпадения
+        const avgFrequency = draws / 20;
+        
+        // 2. Вычисляем отклонение для каждого числа
+        const deviations = countField1.map(count => Math.abs(count - avgFrequency));
+        
+        // 3. Ранжируем числа по степени "устойчивости" (наименьшее отклонение)
+        let numbers1 = Array.from({ length: 20 }, (_, i) => i + 1);
+        numbers1.sort((a, b) => deviations[a - 1] - deviations[b - 1]);
+        
+        // 4. Выбираем 8 самых "устойчивых" чисел
+        const selected1 = numbers1.slice(0, 8).sort((a, b) => a - b);
+        
+        // 5. Для второго поля используем медианное значение
+        let numbers2 = Array.from({ length: 4 }, (_, i) => i + 1);
+        numbers2.sort((a, b) => countField2[a - 1] - countField2[b - 1]);
+        const selected2 = numbers2[Math.floor(numbers2.length / 2)];
+        
+        // Формируем детали расчета
+        let calcHTML = `
+            <div><strong>Всего тиражей:</strong> ${draws}</div>
+            <div><strong>Средняя частота:</strong> ${avgFrequency.toFixed(2)}</div>
+            <div><strong>Отклонения чисел:</strong></div>
+        `;
+        
+        for(let i = 0; i < 20; i++) {
+            calcHTML += `<div>${i+1}: ${deviations[i].toFixed(2)} ${selected1.includes(i+1) ? '✓' : ''}</div>`;
+        }
+        
+        calcHTML += `<div><strong>Выбранные числа:</strong> ${selected1.join(', ')}</div>`;
+        calcHTML += `<div><strong>Число для поля 2:</strong> ${selected2} (медиана)</div>`;
+        
+        karnaughDetails.innerHTML = calcHTML;
+        
+        displayNumbers(selected1, selected2, 'karnaugh');
+    }
+    
+    // НОВЫЙ МЕТОД: КЛАСТЕРИЗАЦИЯ
+    function generateClusterNumbers() {
+        const countField1 = Array(20).fill(0);
+        
+        // Считаем частоты выпадения чисел
+        history.forEach(entry => {
+            if(entry.startsWith('прогноз')) return;
+            const parts = entry.split('|');
+            if(parts.length !== 3) return;
+            const nums1 = parts[1].split(',').map(n => parseInt(n));
+            nums1.forEach(n => {
+                if(n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+        });
+
+        // Если нет истории, используем случайную генерацию
+        const draws = history.filter(e => !e.startsWith('прогноз')).length;
+        if(draws === 0) {
+            generateRandomNumbers();
+            return;
+        }
+
+        // Создаем массив объектов {число, частота}
+        let numbers = Array.from({ length: 20 }, (_, i) => ({ 
+            num: i + 1, 
+            count: countField1[i],
+            cluster: -1
+        }));
+
+        // Сортируем по частоте (по возрастанию)
+        numbers.sort((a, b) => a.count - b.count);
+
+        // Определяем количество кластеров (3-5)
+        const clusterCount = Math.min(5, Math.max(3, Math.floor(numbers.length / 4)));
+        
+        // K-means кластеризация (упрощенная версия)
+        const centroids = [];
+        const clusterSize = Math.floor(numbers.length / clusterCount);
+        
+        // Инициализируем центроиды
+        for(let i = 0; i < clusterCount; i++) {
+            const idx = Math.floor(i * clusterSize + clusterSize / 2);
+            centroids.push(numbers[idx].count);
+        }
+        
+        let changed = true;
+        let iterations = 0;
+        
+        // Алгоритм кластеризации
+        while(changed && iterations < 20) {
+            changed = false;
+            iterations++;
+            
+            // Принадлежность к кластерам
+            numbers.forEach(item => {
+                let minDist = Infinity;
+                let bestCluster = -1;
+                
+                centroids.forEach((centroid, clusterIdx) => {
+                    const dist = Math.abs(item.count - centroid);
+                    if(dist < minDist) {
+                        minDist = dist;
+                        bestCluster = clusterIdx;
+                    }
+                });
+                
+                if(item.cluster !== bestCluster) {
+                    changed = true;
+                    item.cluster = bestCluster;
+                }
+            });
+            
+            // Пересчет центроидов
+            centroids.forEach((_, clusterIdx) => {
+                const clusterItems = numbers.filter(item => item.cluster === clusterIdx);
+                if(clusterItems.length > 0) {
+                    const sum = clusterItems.reduce((acc, item) => acc + item.count, 0);
+                    centroids[clusterIdx] = sum / clusterItems.length;
+                }
+            });
+        }
+        
+        // Формируем кластеры
+        const clusters = {};
+        numbers.forEach(item => {
+            if(!clusters[item.cluster]) clusters[item.cluster] = [];
+            clusters[item.cluster].push(item);
+        });
+        
+        // Для каждого кластера выбираем 1-2 числа с наименьшей частотой
+        const selected1 = [];
+        Object.values(clusters).forEach(cluster => {
+            // Сортируем внутри кластера по частоте
+            cluster.sort((a, b) => a.count - b.count);
+            
+            // Выбираем от 1 до 2 чисел из кластера
+            const toSelect = Math.min(2, Math.max(1, Math.ceil(cluster.length / 4)));
+            for(let i = 0; i < toSelect; i++) {
+                if(cluster[i]) {
+                    selected1.push(cluster[i].num);
+                }
+            }
+        });
+        
+        // Если выбрано слишком много чисел - случайно убираем лишние
+        while(selected1.length > 8) {
+            selected1.splice(Math.floor(Math.random() * selected1.length), 1);
+        }
+        
+        // Если выбрано слишком мало - добавляем случайные
+        while(selected1.length < 8) {
+            const randomNum = Math.floor(Math.random() * 20) + 1;
+            if(!selected1.includes(randomNum)) {
+                selected1.push(randomNum);
+            }
+        }
+        
+        // Сортируем результат
+        selected1.sort((a, b) => a - b);
+        
+        // Для второго поля используем самое редкое число
+        const countField2 = Array(4).fill(0);
+        history.forEach(entry => {
+            if(entry.startsWith('прогноз')) return;
+            const parts = entry.split('|');
+            if(parts.length !== 3) return;
+            const num2 = parseInt(parts[2]);
+            if(num2 >= 1 && num2 <= 4) countField2[num2 - 1]++;
+        });
+        
+        let numbers2 = Array.from({ length: 4 }, (_, i) => i + 1);
+        numbers2.sort((a, b) => countField2[a - 1] - countField2[b - 1]);
+        const selected2 = numbers2[0];
+        
+        // Формируем детали расчета
+        let calcHTML = `<div><strong>Всего тиражей:</strong> ${draws}</div>`;
+        calcHTML += `<div><strong>Количество кластеров:</strong> ${clusterCount}</div>`;
+        calcHTML += `<div><strong>Центроиды:</strong> ${centroids.map(c => c.toFixed(2)).join(', ')}</div>`;
+        
+        Object.entries(clusters).forEach(([clusterId, items]) => {
+            calcHTML += `<div class="cluster-title">Кластер ${parseInt(clusterId)+1} (среднее: ${centroids[clusterId].toFixed(2)})</div>`;
+            calcHTML += `<div class="cluster-row">`;
+            items.forEach(item => {
+                const selected = selected1.includes(item.num);
+                calcHTML += `<div class="number ${selected ? 'selected' : ''}" title="Число ${item.num}: ${item.count} раз">${item.num}</div>`;
+            });
+            calcHTML += `</div>`;
+        });
+        
+        calcHTML += `<div><strong>Выбранные числа:</strong> ${selected1.join(', ')}</div>`;
+        clusterDetails.innerHTML = calcHTML;
+        
+        displayNumbers(selected1, selected2, 'cluster');
+    }
+    
+    // РАСШИРЕННЫЙ ЧАСТОТНЫЙ АНАЛИЗ
+    function updateFrequencyAnalysis() {
+        const countField1 = Array(20).fill(0);
+        const drawCount = history.filter(e => !e.startsWith('прогноз')).length;
+        
+        if(drawCount === 0) {
+            document.getElementById('meanValue').textContent = 'н/д';
+            document.getElementById('stdDevValue').textContent = 'н/д';
+            document.getElementById('hotNumbers').textContent = 'н/д';
+            document.getElementById('coldNumbers').textContent = 'н/д';
+            document.getElementById('frequencyChart').innerHTML = '';
+            return;
+        }
+        
+        // Считаем частоты
+        history.forEach(entry => {
+            if(entry.startsWith('прогноз')) return;
+            const parts = entry.split('|');
+            if(parts.length !== 3) return;
+            const nums1 = parts[1].split(',').map(n => parseInt(n));
+            nums1.forEach(n => {
+                if(n >= 1 && n <= 20) countField1[n - 1]++;
+            });
+        });
+        
+        // Рассчитываем среднее значение
+        const mean = countField1.reduce((a, b) => a + b, 0) / countField1.length;
+        document.getElementById('meanValue').textContent = mean.toFixed(2);
+        
+        // Рассчитываем стандартное отклонение
+        const variance = countField1.reduce((acc, count) => {
+            return acc + Math.pow(count - mean, 2);
+        }, 0) / countField1.length;
+        
+        const stdDev = Math.sqrt(variance);
+        document.getElementById('stdDevValue').textContent = stdDev.toFixed(2);
+        
+        // Определяем горячие и холодные числа
+        const hotNumbers = [];
+        const coldNumbers = [];
+        
+        countField1.forEach((count, index) => {
+            if(count > mean + stdDev * 0.5) {
+                hotNumbers.push(index + 1);
+            } else if(count < mean - stdDev * 0.5) {
+                coldNumbers.push(index + 1);
+            }
+        });
+        
+        document.getElementById('hotNumbers').textContent = hotNumbers.join(', ') || 'нет';
+        document.getElementById('coldNumbers').textContent = coldNumbers.join(', ') || 'нет';
+        
+        // Строим график
+        const chart = document.getElementById('frequencyChart');
+        chart.innerHTML = '';
+        
+        const maxCount = Math.max(...countField1);
+        const minCount = Math.min(...countField1);
+        const range = maxCount - minCount || 1;
+        
+        countField1.forEach((count, index) => {
+            const bar = document.createElement('div');
+            bar.className = 'frequency-bar';
+            
+            // Определяем тип числа (горячее/холодное)
+            if(count > mean + stdDev * 0.5) {
+                bar.classList.add('hot');
+            } else if(count < mean - stdDev * 0.5) {
+                bar.classList.add('cold');
+            }
+            
+            // Высота столбца (нормализация)
+            const heightPercent = 10 + 90 * (count - minCount) / range;
+            bar.style.height = `${heightPercent}%`;
+            
+            // Подпись числа
+            const label = document.createElement('div');
+            label.className = 'frequency-label';
+            label.textContent = index + 1;
+            
+            // Тултип с частотой
+            bar.title = `Число ${index+1}: ${count} раз (${count > mean ? 'горячее' : 'холодное'})`;
+            
+            bar.appendChild(label);
+            chart.appendChild(bar);
+        });
+    }
+    
+    // Случайная генерация
+    function generateRandomNumbers() {
+        const nums1 = [];
+        while(nums1.length < 8) {
+            const n = Math.floor(Math.random() * 20) + 1;
+            if(!nums1.includes(n)) nums1.push(n);
+        }
+        nums1.sort((a, b) => a - b);
+        const n2 = Math.floor(Math.random() * 4) + 1;
+        
+        displayNumbers(nums1, n2, 'random');
+    }
+    
+    // Отображение сгенерированных чисел
+    function displayNumbers(nums1, num2, method = 'cold') {
+        const field1 = document.getElementById('field1');
+        const field2 = document.getElementById('field2');
+        field1.innerHTML = '';
+        field2.innerHTML = '';
+
+        nums1.forEach(n => {
+            const div = document.createElement('div');
+            div.className = 'number';
+            
+            // Специальное оформление для метода Карнауха
+            if(method === 'karnaugh') {
+                div.classList.add('karnaugh');
+            }
+            // Для кластеризации
+            else if(method === 'cluster') {
+                div.classList.add('special');
+            }
+            // Для других методов используем стандартное оформление
+            else if(method === 'ogneva') {
+                div.classList.add('special');
+            }
+            
+            div.textContent = n;
+            field1.appendChild(div);
+        });
+        
+        const div2 = document.createElement('div');
+        div2.className = 'number small';
+        
+        if(method === 'karnaugh') {
+            div2.classList.add('karnaugh');
+        } else if(method === 'ogneva' || method === 'cluster') {
+            div2.classList.add('special');
+        }
+        
+        div2.textContent = num2;
+        field2.appendChild(div2);
+        
+        // Анимация выбора
+        setTimeout(() => {
+            field1.querySelectorAll('.number').forEach(el => {
+                el.classList.add('selected');
+            });
+            div2.classList.add('selected');
+        }, 100);
+    }
+    
+    // --- Расчет выигрышей ---
+    function updateWinsStats() {
+        const totalBets = history.filter(e => e.startsWith('прогноз')).length;
+        const totalSpent = totalBets * 50;
+        let totalWon = 0;
+        let winsDetailsHTML = "";
+        
+        // Рассчитываем выигрыши для каждого прогноза
+        for (let i = 0; i < history.length; i++) {
+            const entry = history[i];
+            
+            // Работаем только с прогнозами
+            if (!entry.startsWith('прогноз')) continue;
+            
+            const [_, predField1, predField2] = entry.split('|');
+            const userNums1 = predField1.split(',').map(Number);
+            const userNum2 = parseInt(predField2);
+            
+            // Ищем следующий тираж после прогноза
+            let nextDraw = null;
+            for (let j = i + 1; j < history.length; j++) {
+                if (!history[j].startsWith('прогноз')) {
+                    nextDraw = history[j];
+                    break;
+                }
+            }
+            
+            if (!nextDraw) {
+                winsDetailsHTML += `<div class="win-item">
+                    <span>Прогноз: ${predField1} | ${userNum2}</span>
+                    <span>Статус: Ожидание тиража</span>
+                </div>`;
+                continue;
+            }
+            
+            const [drawId, drawField1, drawField2] = nextDraw.split('|');
+            const drawNums1 = drawField1.split(',').map(Number);
+            const drawNum2 = parseInt(drawField2);
+            
+            // Считаем совпадения в поле 1
+            let matches1 = 0;
+            for (const num of userNums1) {
+                if (drawNums1.includes(num)) matches1++;
+            }
+            
+            // Совпадение в поле 2
+            const match2 = userNum2 === drawNum2 ? 1 : 0;
+            
+            // Рассчитываем выигрыш
+            const win = calculateWin(matches1, match2);
+            const winAmount = typeof win === "number" ? win : 0;
+            totalWon += winAmount;
+            
+            // Формируем детализацию
+            winsDetailsHTML += `<div class="win-item">
+                <span>Прогноз: ${predField1} | ${userNum2}</span>
+                <span>Тираж: ${drawField1} | ${drawNum2}</span>
+                <span>Совпадения: ${matches1}|${match2}</span>
+                <span>${typeof win === "string" ? win : win + " руб"}</span>
+            </div>`;
+        }
+        
+        // Обновляем DOM
+        document.getElementById("totalBets").textContent = totalBets;
+        document.getElementById("totalSpent").textContent = `${totalSpent} руб`;
+        document.getElementById("totalWon").textContent = `${totalWon} руб`;
+        
+        const balance = totalWon - totalSpent;
+        const balanceElem = document.getElementById("balance");
+        balanceElem.textContent = `${balance} руб`;
+        balanceElem.className = `win-stat-value ${balance >= 0 ? "profit-positive" : "profit-negative"}`;
+        
+        document.getElementById("winsDetails").innerHTML = winsDetailsHTML || 
+            "<p>Нет данных для расчета. Добавьте прогнозы и тиражи.</p>";
+    }
+
+    // Функция для расчета выигрыша по совпадениям
+    function calculateWin(matches1, match2) {
+        if (matches1 === 8 && match2 === 1) return "Суперприз";
+        if (matches1 === 8 && match2 === 0) return 25000;
+        if (matches1 === 7 && match2 === 1) return 5000;
+        if (matches1 === 7 && match2 === 0) return 1000;
+        if (matches1 === 6 && match2 === 1) return 175;
+        if (matches1 === 6 && match2 === 0) return 150;
+        if (matches1 === 5 && match2 === 1) return 100;
+        if (matches1 === 5 && match2 === 0) return 50;
+        return 0;
+    }
+
+    // --- Инициализация при загрузке ---
+    document.getElementById('genBtn').onclick = generateNumbers;
+    updateStats();
+    updateWinsStats();
+    generateNumbers();
+    
+    // Обработчики для всех кнопок (для PWA режима)
+    document.querySelectorAll('button').forEach(button => {
+        button.addEventListener('pointerdown', () => {
+            button.classList.add('active');
+        });
+        button.addEventListener('pointerup', () => {
+            button.classList.remove('active');
+        });
+    });
+    
+    // Инициализация ввода
+    updateInputDisplay();
+    
+    // iOS PWA фикс: перефокусировка при возвращении на страницу
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && customKeyboard.style.display === 'flex') {
+            setTimeout(() => {
+                fakeInput.focus();
+            }, 300);
+        }
+    });
+</script>
+</body>
+</html>
