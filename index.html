@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <link rel="apple-touch-icon" sizes="180x180" href="icons/icon180.png">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="RDS4">
+    <meta name="apple-mobile-web-app-title" content="RDS3">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Рапидо Старт</title>
     <style>
@@ -277,10 +277,12 @@
             display: flex;
             gap: 8px;
             margin-bottom: 12px;
+            flex-wrap: wrap;
         }
         .method-btn {
             flex: 1;
-            padding: 8px;
+            min-width: 70px;
+            padding: 8px 5px;
             text-align: center;
             background: var(--keyboard-bg);
             border-radius: 8px;
@@ -306,7 +308,7 @@
             cursor: help;
         }
         
-        /* Новые стили для блока выигрышей */
+        /* Стили для блока выигрышей */
         .win-stats {
             display: flex;
             justify-content: space-between;
@@ -353,7 +355,7 @@
             min-width: 120px;
         }
         
-        /* Новые стили для истории */
+        /* Стили для истории */
         .history-header {
             display: flex;
             font-weight: bold;
@@ -486,6 +488,14 @@
             font-size: 12px;
             margin-left: 5px;
         }
+        .method-badge {
+            font-size: 11px;
+            background: var(--special-color);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
@@ -500,11 +510,11 @@
         <div class="card">
             <h2>Сгенерировать числа</h2>
             <div class="method-selector">
-                <div class="method-btn active" data-method="cold" tabindex="0">Холодные</div>
-                <div class="method-btn" data-method="ogneva" tabindex="0">Огнева<span class="info-icon" title="Характеристическое число">?</span></div>
-                <div class="method-btn" data-method="karnaugh" tabindex="0">Карнауха<span class="info-icon" title="Метод математика П.В. Карнауха">?</span></div>
-                <div class="method-btn" data-method="cluster" tabindex="0">Кластеризация<span class="info-icon" title="Группировка чисел по частоте выпадения">?</span></div>
-                <div class="method-btn" data-method="random" tabindex="0">Случайные</div>
+                <div class="method-btn active" data-method="cold" tabindex="0">Холодные<span class="method-badge">хо</span></div>
+                <div class="method-btn" data-method="ogneva" tabindex="0">Огнева<span class="method-badge">ог</span></div>
+                <div class="method-btn" data-method="karnaugh" tabindex="0">Карнауха<span class="method-badge">ка</span></div>
+                <div class="method-btn" data-method="cluster" tabindex="0">Кластеризация<span class="method-badge">кл</span></div>
+                <div class="method-btn" data-method="random" tabindex="0">Случайные<span class="method-badge">сл</span></div>
             </div>
             <p>Поле 1 (8 из 20):</p>
             <div class="numbers" id="field1"></div>
@@ -636,14 +646,31 @@
     let history = JSON.parse(localStorage.getItem('rapido2History') || '[]');
     if (!Array.isArray(history)) history = [];
     
+    // Словарь сокращений для методов
+    const methodAbbreviations = {
+        'cold': 'хо',
+        'ogneva': 'ог',
+        'karnaugh': 'ка',
+        'cluster': 'кл',
+        'random': 'сл'
+    };
+    
+    // Текущий метод для метки
+    let currentMethodLabel = 'cold';
+
     // --- Отображение истории ---
     const historyList = document.getElementById('historyList');
     function renderHistory() {
         historyList.innerHTML = '';
         history.forEach((entry, idx) => {
-            const [type, field1, field2] = entry.split('|');
+            const parts = entry.split('|');
+            const type = parts[0];
+            const field1 = parts[1];
+            const field2 = parts[2] || '';
+            
             const row = document.createElement('div');
-            row.className = `history-row ${type === 'прогноз' ? 'prediction' : 'draw'}`;
+            row.className = `history-row ${type.startsWith('Прогноз') ? 'prediction' : 'draw'}`;
+            
             row.innerHTML = `
                 <div class="history-type">${type}</div>
                 <div class="history-field">${field1}</div>
@@ -831,7 +858,9 @@
             return;
         }
         
-        const prediction = `прогноз|${nums1.join(',')}|${num2}`;
+        // Создаем метку метода
+        const methodAbbr = methodAbbreviations[currentMethodLabel] || '?';
+        const prediction = `Прогноз (${methodAbbr})|${nums1.join(',')}|${num2}`;
         
         // Проверка дубликатов
         if(history.includes(prediction)) {
@@ -862,7 +891,7 @@
 
         history.forEach(entry => {
             // Пропускаем прогнозы
-            if(entry.startsWith('прогноз')) return;
+            if(entry.startsWith('Прогноз')) return;
             
             const parts = entry.split('|');
             if(parts.length !== 3) return;
@@ -907,6 +936,7 @@
             document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentMethod = btn.dataset.method;
+            currentMethodLabel = currentMethod; // Сохраняем для метки
             
             // Показываем/скрываем блок с расчетом для Карнауха
             karnaughCalc.classList.toggle('active', currentMethod === 'karnaugh');
@@ -946,7 +976,7 @@
 
         history.forEach(entry => {
             // Пропускаем прогнозы
-            if(entry.startsWith('прогноз')) return;
+            if(entry.startsWith('Прогноз')) return;
             
             const parts = entry.split('|');
             if(parts.length !== 3) return;
@@ -960,7 +990,7 @@
             if(num2 >= 1 && num2 <= 4) countField2[num2 - 1]++;
         });
 
-        if(history.filter(e => !e.startsWith('прогноз')).length === 0) {
+        if(history.filter(e => !e.startsWith('Прогноз')).length === 0) {
             generateRandomNumbers();
             return;
         }
@@ -980,7 +1010,7 @@
     
     // Метод Огнева (характеристическое число)
     function generateOgnevaNumbers() {
-        const draws = history.filter(e => !e.startsWith('прогноз'));
+        const draws = history.filter(e => !e.startsWith('Прогноз'));
         
         if(draws.length < 5) {
             generateColdNumbers();
@@ -1037,7 +1067,7 @@
 
         history.forEach(entry => {
             // Пропускаем прогнозы
-            if(entry.startsWith('прогноз')) return;
+            if(entry.startsWith('Прогноз')) return;
             
             const parts = entry.split('|');
             if(parts.length !== 3) return;
@@ -1051,7 +1081,7 @@
             if(num2 >= 1 && num2 <= 4) countField2[num2 - 1]++;
         });
 
-        const draws = history.filter(e => !e.startsWith('прогноз')).length;
+        const draws = history.filter(e => !e.startsWith('Прогноз')).length;
         if(draws < 5) {
             generateColdNumbers();
             return;
@@ -1100,7 +1130,7 @@
         
         // Считаем частоты выпадения чисел
         history.forEach(entry => {
-            if(entry.startsWith('прогноз')) return;
+            if(entry.startsWith('Прогноз')) return;
             const parts = entry.split('|');
             if(parts.length !== 3) return;
             const nums1 = parts[1].split(',').map(n => parseInt(n));
@@ -1110,7 +1140,7 @@
         });
 
         // Если нет истории, используем случайную генерацию
-        const draws = history.filter(e => !e.startsWith('прогноз')).length;
+        const draws = history.filter(e => !e.startsWith('Прогноз')).length;
         if(draws === 0) {
             generateRandomNumbers();
             return;
@@ -1217,7 +1247,7 @@
         // Для второго поля используем самое редкое число
         const countField2 = Array(4).fill(0);
         history.forEach(entry => {
-            if(entry.startsWith('прогноз')) return;
+            if(entry.startsWith('Прогноз')) return;
             const parts = entry.split('|');
             if(parts.length !== 3) return;
             const num2 = parseInt(parts[2]);
@@ -1252,7 +1282,7 @@
     // РАСШИРЕННЫЙ ЧАСТОТНЫЙ АНАЛИЗ
     function updateFrequencyAnalysis() {
         const countField1 = Array(20).fill(0);
-        const drawCount = history.filter(e => !e.startsWith('прогноз')).length;
+        const drawCount = history.filter(e => !e.startsWith('Прогноз')).length;
         
         if(drawCount === 0) {
             document.getElementById('meanValue').textContent = 'н/д';
@@ -1265,7 +1295,7 @@
         
         // Считаем частоты
         history.forEach(entry => {
-            if(entry.startsWith('прогноз')) return;
+            if(entry.startsWith('Прогноз')) return;
             const parts = entry.split('|');
             if(parts.length !== 3) return;
             const nums1 = parts[1].split(',').map(n => parseInt(n));
@@ -1401,7 +1431,7 @@
     
     // --- Расчет выигрышей ---
     function updateWinsStats() {
-        const totalBets = history.filter(e => e.startsWith('прогноз')).length;
+        const totalBets = history.filter(e => e.startsWith('Прогноз')).length;
         const totalSpent = totalBets * 50;
         let totalWon = 0;
         let winsDetailsHTML = "";
@@ -1411,16 +1441,16 @@
             const entry = history[i];
             
             // Работаем только с прогнозами
-            if (!entry.startsWith('прогноз')) continue;
+            if (!entry.startsWith('Прогноз')) continue;
             
-            const [_, predField1, predField2] = entry.split('|');
+            const [predType, predField1, predField2] = entry.split('|');
             const userNums1 = predField1.split(',').map(Number);
             const userNum2 = parseInt(predField2);
             
             // Ищем следующий тираж после прогноза
             let nextDraw = null;
             for (let j = i + 1; j < history.length; j++) {
-                if (!history[j].startsWith('прогноз')) {
+                if (!history[j].startsWith('Прогноз')) {
                     nextDraw = history[j];
                     break;
                 }
@@ -1428,7 +1458,7 @@
             
             if (!nextDraw) {
                 winsDetailsHTML += `<div class="win-item">
-                    <span>Прогноз: ${predField1} | ${userNum2}</span>
+                    <span>${predType}</span>
                     <span>Статус: Ожидание тиража</span>
                 </div>`;
                 continue;
@@ -1454,7 +1484,7 @@
             
             // Формируем детализацию
             winsDetailsHTML += `<div class="win-item">
-                <span>Прогноз: ${predField1} | ${userNum2}</span>
+                <span>${predType}</span>
                 <span>Тираж: ${drawField1} | ${drawNum2}</span>
                 <span>Совпадения: ${matches1}|${match2}</span>
                 <span>${typeof win === "string" ? win : win + " руб"}</span>
